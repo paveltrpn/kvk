@@ -5,21 +5,8 @@
  * For more detailed information on multi-project builds, please refer to https://docs.gradle.org/8.13/userguide/multi_project_builds.html in the Gradle documentation.
  */
 
-rootProject.name = "tire"
-include("tire")
-project(":tire").projectDir = file("apps/tire")
+rootProject.name = "kvk"
+include("kvk", "modules")
 
-include("encode")
-project(":encode").projectDir = file("apps/encode")
-
-include(":tire", ":modules")
-project(":modules").projectDir = file("modules")
-
-include(":encode", ":modules")
-project(":modules").projectDir = file("modules")
-
-include("server")
-project(":server").projectDir = file("apps/server")
-
-include(":server", ":modules")
+project(":kvk").projectDir = file("kvk")
 project(":modules").projectDir = file("modules")

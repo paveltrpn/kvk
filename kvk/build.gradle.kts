@@ -50,6 +50,6 @@ kotlin {
 }
 
 application {
-    mainClass = "tire.MainKt"
+    mainClass = "kvk.MainKt"
 }
 
