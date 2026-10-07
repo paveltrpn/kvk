@@ -1,14 +1,10 @@
 plugins {
-    kotlin("jvm") version "2.2.0"
+    kotlin("jvm")
 }
 
 repositories {
     mavenCentral()
 }
-
-val group = "com.example"
-val version = "1.0-SNAPSHOT"
-
 val lwjglVersion = "3.3.6"
 val lwjglNatives = "natives-linux"
 
@@ -37,6 +33,7 @@ dependencies {
 }
 
 kotlin {
+    jvmToolchain(26)
     compilerOptions {
         // optIn.add("kotlin.RequiresOptIn")
     }
