@@ -12,8 +12,8 @@ class Surface(instance: VkInstance, window: Long) : ResourceBase() {
         mStack.push().use { stack ->
             // Create a WSI surface for the window.
             val surfaceBuf = stack.mallocLong(1)
-            glfwCreateWindowSurface(instance, window, null, surfaceBuf);
-            mSurface = surfaceBuf.get(0);
+            glfwCreateWindowSurface(instance, window, null, surfaceBuf)
+            mSurface = surfaceBuf.get(0)
         }
     }
 }
