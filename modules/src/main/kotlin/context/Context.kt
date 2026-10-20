@@ -368,7 +368,7 @@ class Context(
                         throw RuntimeException("failed to create fence: $result")
                     }
                 }
-                
+
                 frame.inFlightFence = handleBuf.get(0)
 
                 val allocInfo = VkCommandBufferAllocateInfo.calloc(stack)
@@ -490,7 +490,10 @@ class Context(
             )
 
             val clearColor = VkClearValue.calloc(stack)
-            clearColor.color().float32(3, 1.0f)
+            val color = clearColor.color()
+            color.float32(0, 0.2f)
+            color.float32(1, 0.1f)
+            color.float32(2, 0.1f)
 
             // Dynamic rendering, core since Vulkan 1.3.
             val colorAttachmentInfo = VkRenderingAttachmentInfo.calloc(1, stack)
