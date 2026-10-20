@@ -51,7 +51,7 @@ class Window {
         }
 
         context = Context(window)
-        render = Render()
+        render = Render(context)
 
         glfwSetWindowSizeLimits(window, WIDTH, HEIGHT, GLFW_DONT_CARE, GLFW_DONT_CARE)
 

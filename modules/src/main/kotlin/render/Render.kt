@@ -1,30 +1,45 @@
 package render
 
-import scene.Scene
 import config.Config
+import context.Context
 
-class Render {
-    val scene = Scene()
+import org.lwjgl.vulkan.VK10.vkDeviceWaitIdle
 
-    // NOTE: for test, see output, remove later.
-    //var progOne: Program
+// Port of tire RenderVK (mainloop.cpp), reduced to the black screen pass.
+class Render(val context: Context) {
+    private var mCurrentFrame: Int = 0
 
-    init {
-        //progOne = Program("${Config.workPath()}/shaders", "flatshade")
+    fun preLoop() {
+        println("render loop starts here...")
     }
 
-    fun preLoop(): Unit {
+    fun frame() {
+        if (context.swapchainOutdated) {
+            if (!context.recreateSwapchain()) {
+                return
+            }
+        }
+
+        // Acquire swapchain image before any submit. On failure nothing is
+        // acquired and no semaphore will be signaled — skip the whole frame.
+        if (!context.acquireImage(mCurrentFrame)) {
+            return
+        }
+
+        // Empty body — black screen only.
+        context.renderScope(mCurrentFrame) { }
+
+        mCurrentFrame = (mCurrentFrame + 1) % Config.FRAMES_COUNT
     }
-    
-    fun frame(): Unit {
 
-    }
+    fun postLoop() {
+        println("wait device idle...")
 
-    fun postLoop(): Unit {
-
+        // Wait for the logical device to finish operations before exiting
+        // mainLoop and destroying the window.
+        vkDeviceWaitIdle(context.device)
     }
 
     fun free() {
-
     }
 }

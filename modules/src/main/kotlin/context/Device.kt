@@ -7,8 +7,10 @@ import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.MemoryUtil.memAllocPointer
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR
+import org.lwjgl.vulkan.VK10.vkDestroyDevice
 import org.lwjgl.vulkan.VK10.vkEnumerateDeviceExtensionProperties
 import org.lwjgl.vulkan.VK10.vkEnumeratePhysicalDevices
+import org.lwjgl.vulkan.VK10.vkGetDeviceQueue
 import org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceQueueFamilyProperties
 import org.lwjgl.vulkan.VK14.*
 
@@ -24,6 +26,10 @@ class Device(val instance: VkInstance, surface: Long) : ResourceBase() {
 
     // Logical device properties.
     val mLogicalDevice: VkDevice
+
+    // Device queues.
+    val mGraphicsQueue: VkQueue
+    val mPresentQueue: VkQueue
 
     init {
         mStack.push().use { stack ->
@@ -122,7 +128,18 @@ class Device(val instance: VkInstance, surface: Long) : ResourceBase() {
             mPresentQueueNodeIndex = pq
 
             mLogicalDevice = initLogicalDevice(devFeatureList[pickedDevIndex])
+
+            // NOTE: graphics and present queue families are enforced to be
+            // equal above, so one queue handle serves both roles.
+            val queuePtr = stack.mallocPointer(1)
+            vkGetDeviceQueue(mLogicalDevice, mGraphicsQueueNodeIndex, 0, queuePtr)
+            mGraphicsQueue = VkQueue(queuePtr.get(0), mLogicalDevice)
+            mPresentQueue = mGraphicsQueue
         }
+    }
+
+    fun free() {
+        vkDestroyDevice(mLogicalDevice, null)
     }
 
     fun pick(props: ArrayList<VkPhysicalDeviceProperties>): Int {
@@ -344,8 +361,15 @@ class Device(val instance: VkInstance, surface: Long) : ResourceBase() {
                 features.shaderClipDistance(true)
             }
 
+            // Dynamic rendering is core since Vulkan 1.3 but the feature
+            // must still be explicitly enabled.
+            val vulkan13Features = VkPhysicalDeviceVulkan13Features.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES)
+                .dynamicRendering(true)
+
             val deviceCreateInfo = VkDeviceCreateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
+                .pNext(vulkan13Features)
                 .pQueueCreateInfos(queues)
                 .ppEnabledLayerNames(desiredValidationLayers)
                 .ppEnabledExtensionNames(desiredExtensions)

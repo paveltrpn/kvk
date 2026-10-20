@@ -4,6 +4,7 @@ import org.lwjgl.PointerBuffer
 
 import org.lwjgl.glfw.GLFWVulkan
 
+import org.lwjgl.vulkan.VK10.vkDestroyInstance
 import org.lwjgl.vulkan.VK14.*
 import org.lwjgl.vulkan.VkInstance
 import org.lwjgl.vulkan.VkLayerProperties
@@ -103,6 +104,10 @@ class Instance : ResourceBase() {
         }
 
         return required
+    }
+
+    fun free() {
+        vkDestroyInstance(mInstance, null)
     }
 
 }

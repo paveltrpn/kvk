@@ -4,6 +4,8 @@ import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
 object Config {
+    const val FRAMES_COUNT: Int = 2
+
     private val workPath: String
 
     init {
