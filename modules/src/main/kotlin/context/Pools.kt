@@ -5,7 +5,6 @@ import org.lwjgl.vulkan.VkCommandPoolCreateInfo
 import org.lwjgl.vulkan.VkDescriptorPoolCreateInfo
 import org.lwjgl.vulkan.VkDescriptorPoolSize
 
-// Port of tire ContextPools (contextpools.cpp).
 class Pools(val device: Device) : ResourceBase() {
     val mCommandPool: Long
     val mDescriptorPool: Long

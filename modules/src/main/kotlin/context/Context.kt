@@ -90,7 +90,7 @@ class Context(
 
             println(
                 "surface capabilities minImageCount: ${caps.minImageCount()}, " +
-                    "maxImageCount: ${caps.maxImageCount()}"
+                        "maxImageCount: ${caps.maxImageCount()}"
             )
 
             // Resolve swapchain extent against surface capabilities.
@@ -201,6 +201,7 @@ class Context(
                     }
 
                 val viewBuf = stack.mallocLong(1)
+
                 when (val result = vkCreateImageView(device, createInfo, null, viewBuf)) {
                     VK_SUCCESS -> {
                     }
@@ -209,6 +210,7 @@ class Context(
                         throw RuntimeException("failed to create swapchain image view: $result")
                     }
                 }
+
                 frame.view = viewBuf.get(0)
             }
         }
@@ -272,6 +274,7 @@ class Context(
                     .commandBufferCount(1)
 
                 val cbBuf = stack.mallocPointer(1)
+
                 when (val result = vkAllocateCommandBuffers(device, allocInfo, cbBuf)) {
                     VK_SUCCESS -> {
                     }
@@ -280,6 +283,7 @@ class Context(
                         throw RuntimeException("failed to allocate command buffer: $result")
                     }
                 }
+
                 frame.cbPrimary = VkCommandBuffer(cbBuf.get(0), device)
             }
         }
@@ -297,27 +301,35 @@ class Context(
             vkWaitForFences(device, stack.longs(frame.inFlightFence), true, -1L)
 
             val indexBuf = stack.mallocInt(1)
+
             val result = vkAcquireNextImageKHR(
                 device, mSwapchain, -1L, frame.imageAvailableSemaphore, VK_NULL_HANDLE, indexBuf
             )
+
             mAcquiredImageIndex = indexBuf.get(0)
 
-            if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-                // Nothing acquired, imageAvailableSemaphore will never be
-                // signaled — caller must skip the whole frame.
-                markSwapchainOutdated()
-                return false
+            when (result) {
+                VK_ERROR_OUT_OF_DATE_KHR -> {
+                    // Nothing acquired, imageAvailableSemaphore will never be
+                    // signaled — caller must skip the whole frame.
+                    markSwapchainOutdated()
+                    return false
+                }
+
+                VK_SUBOPTIMAL_KHR -> {
+                    // Image acquired and must be presented, but recreate swapchain
+                    // at the next frame start.
+                    markSwapchainOutdated()
+                }
+
+                else -> {
+                    if (result != VK_SUCCESS) {
+                        throw RuntimeException("failed to acquire swapchain image: $result")
+                    }
+                }
             }
 
-            if (result == VK_SUBOPTIMAL_KHR) {
-                // Image acquired and must be presented, but recreate swapchain
-                // at the next frame start.
-                markSwapchainOutdated()
-            }
 
-            if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-                throw RuntimeException("failed to acquire swapchain image: $result")
-            }
         }
 
         return true
@@ -478,9 +490,8 @@ class Context(
                 .pSwapchains(stack.longs(mSwapchain))
                 .pImageIndices(stack.ints(imageIndex))
 
-            // May return VK_SUBOPTIMAL_KHR or even VK_ERROR_OUT_OF_DATE_KHR if
-            // current surface properties no longer match the swapchain.
             val result = vkQueuePresentKHR(mDevice.mPresentQueue, presentInfo)
+
             if (result != VK_SUCCESS) {
                 println("queue present result $result, is it normal?")
                 if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
@@ -526,7 +537,7 @@ class Context(
     // Port of tire Context::releaseContext() (context.cpp:104-128),
     // minus depth/upload parts. Runs after Render.postLoop()'s vkDeviceWaitIdle.
     fun free() {
-        println("release vulkan context...")
+        println("Release vulkan context.")
 
         for (frame in mFrames) {
             vkDestroySemaphore(device, frame.imageAvailableSemaphore, null)
