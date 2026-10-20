@@ -25,7 +25,7 @@ fun sparseObjectsGraph(program: FlatshadeProgram): Triple<StateGroup, StateGroup
     val arch01dObj = readWavefrontObjFile("${pathPrefix}/assets/bodies/arch01.obj")
     val arch01dMesh = SeparatedArraysMesh(arch01dObj)
 
-    val tubeMesh = InterleavedMesh(TubeMesh().toObjMesh("tube"))
+    val tubeMesh = InterleavedMesh(CappedTubeMesh().toObjMesh("tube"))
     val torusMesh = InterleavedMesh(TorusMesh().toObjMesh("torus"))
 
     // =================================================
