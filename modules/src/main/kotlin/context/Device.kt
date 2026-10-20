@@ -362,6 +362,12 @@ class Device(val instance: VkInstance, surface: Long) : ResourceBase() {
                 features.shaderClipDistance(true)
             }
 
+            // tire enables depthClamp unconditionally (device.cpp:275);
+            // the test box pipeline sets depthClampEnable VK_TRUE.
+            if (deviceFeatures.depthClamp()) {
+                features.depthClamp(true)
+            }
+
             // Dynamic rendering is core since Vulkan 1.3 but the feature
             // must still be explicitly enabled.
             val vulkan13Features = VkPhysicalDeviceVulkan13Features.calloc(stack)

@@ -26,8 +26,13 @@ class Context(
     private var mSurface: Surface
     private var mDevice: Device
     private var mPools: Pools
+    private var mAllocator: Allocator
+
+    private var mBlockingCommandFence: Long = VK_NULL_HANDLE
+    private lateinit var mBlockingCommandBuffer: VkCommandBuffer
 
     private var mSwapchain: Long = VK_NULL_HANDLE
+    private var mDepthImage: DepthImage? = null
     private var mFramesCount: Int = 0
     private var mFrames: MutableList<Frame> = mutableListOf()
 
@@ -47,7 +52,11 @@ class Context(
 
         mPools = Pools(mDevice)
 
+        mAllocator = Allocator(mDevice.mPhysDevice, device, instance)
+
         println("picked physical device name: $deviceName")
+
+        initBlockingCommandBuffer()
 
         makeSwapchain()
         makeFrames()
@@ -73,8 +82,93 @@ class Context(
             return mDevice.mLogicalDevice
         }
 
+    val physicalDevice: VkPhysicalDevice
+        get(): VkPhysicalDevice {
+            return mDevice.mPhysDevice
+        }
+
+    val allocator: Long
+        get(): Long {
+            return mAllocator.allocator
+        }
+
+    val surfaceFormat: Int
+        get(): Int {
+            return mSurface.mSurfaceFormat
+        }
+
+    fun viewportSize(): Pair<Int, Int> {
+        return Pair(mWidth, mHeight)
+    }
+
     fun markSwapchainOutdated() {
         swapchainOutdated = true
+    }
+
+    // Port of tire Context::initBlockingCommandBuffer() (init.cpp:46).
+    private fun initBlockingCommandBuffer() {
+        mStack.push().use { stack ->
+            val fenceInfo = VkFenceCreateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO)
+
+            val fenceBuf = stack.mallocLong(1)
+            when (val result = vkCreateFence(device, fenceInfo, null, fenceBuf)) {
+                VK_SUCCESS -> {
+                }
+
+                else -> {
+                    throw RuntimeException("failed to create blocking command fence: $result")
+                }
+            }
+            mBlockingCommandFence = fenceBuf.get(0)
+
+            val allocInfo = VkCommandBufferAllocateInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
+                .commandPool(mPools.mCommandPool)
+                .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+                .commandBufferCount(1)
+
+            val cbBuf = stack.mallocPointer(1)
+            when (val result = vkAllocateCommandBuffers(device, allocInfo, cbBuf)) {
+                VK_SUCCESS -> {
+                }
+
+                else -> {
+                    throw RuntimeException("failed to allocate blocking command buffer: $result")
+                }
+            }
+            mBlockingCommandBuffer = VkCommandBuffer(cbBuf.get(0), device)
+        }
+    }
+
+    // Kotlin-lambda version of tire Context::blockingCommandScope()
+    // (commands.cpp:17-74). Records commands and submits them to the
+    // graphics queue, then blocks until completion.
+    fun blockingScope(block: (VkCommandBuffer) -> Unit) {
+        mStack.push().use { stack ->
+            vkResetFences(device, stack.longs(mBlockingCommandFence))
+
+            vkResetCommandBuffer(mBlockingCommandBuffer, 0)
+
+            val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+                .flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+
+            vkBeginCommandBuffer(mBlockingCommandBuffer, beginInfo)
+
+            // Record commands from the caller.
+            block(mBlockingCommandBuffer)
+
+            vkEndCommandBuffer(mBlockingCommandBuffer)
+
+            val submitInfo = VkSubmitInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
+                .pCommandBuffers(stack.pointers(mBlockingCommandBuffer))
+
+            vkQueueSubmit(mDevice.mGraphicsQueue, submitInfo, mBlockingCommandFence)
+
+            vkWaitForFences(device, stack.longs(mBlockingCommandFence), true, -1L)
+        }
     }
 
     private fun clamp(value: Int, min: Int, max: Int): Int {
@@ -160,6 +254,9 @@ class Context(
             }
             mFramesCount = countBuf.get(0)
         }
+
+        // Depth attachment image for the new extent (swapchain.cpp:116).
+        mDepthImage = DepthImage(this, mWidth, mHeight)
     }
 
     // Port of tire Context::makeFramesImages() (swapchain.cpp:119-159).
@@ -343,7 +440,7 @@ class Context(
     }
 
     // Kotlin-lambda version of tire Context::renderCommandScope()
-    // (commands.cpp:161-323), minus depth attachment and upload semaphore.
+    // (commands.cpp:161-323), minus upload semaphore.
     fun renderScope(frameId: Int, block: (VkCommandBuffer) -> Unit) {
         val frame = mFrames[frameId]
         val imageIndex = mAcquiredImageIndex
@@ -404,6 +501,19 @@ class Context(
                 .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
                 .clearValue(clearColor)
 
+            val clearDepth = VkClearValue.calloc(stack)
+            clearDepth.depthStencil { depthStencil ->
+                depthStencil.depth(1.0f).stencil(0)
+            }
+
+            val depthAttachmentInfo = VkRenderingAttachmentInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO)
+                .imageView(mDepthImage!!.view)
+                .imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+                .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+                .storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                .clearValue(clearDepth)
+
             val renderingInfo = VkRenderingInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_RENDERING_INFO)
                 .renderArea { area ->
@@ -414,6 +524,7 @@ class Context(
                 .layerCount(1)
                 // NOTE: colorAttachmentCount is derived from the buffer.
                 .pColorAttachments(colorAttachmentInfo)
+                .pDepthAttachment(depthAttachmentInfo)
 
             vkCmdBeginRendering(cb, renderingInfo)
 
@@ -508,7 +619,7 @@ class Context(
         }
     }
 
-    // Port of tire Context::recreateSwapchain() (context.cpp:72-102), minus depth image.
+    // Port of tire Context::recreateSwapchain() (context.cpp:72-102).
     fun recreateSwapchain(width: Int = 0, height: Int = 0): Boolean {
         vkDeviceWaitIdle(device)
 
@@ -532,6 +643,9 @@ class Context(
             vkDestroyImageView(device, frame.view, null)
         }
 
+        mDepthImage?.free()
+        mDepthImage = null
+
         vkDestroySwapchainKHR(device, mSwapchain, null)
 
         makeSwapchain()
@@ -542,9 +656,11 @@ class Context(
     }
 
     // Port of tire Context::releaseContext() (context.cpp:104-128),
-    // minus depth/upload parts. Runs after Render.postLoop()'s vkDeviceWaitIdle.
+    // minus upload semaphore. Runs after Render.postLoop()'s vkDeviceWaitIdle.
     fun free() {
         println("Release vulkan context.")
+
+        vkDestroyFence(device, mBlockingCommandFence, null)
 
         for (frame in mFrames) {
             vkDestroySemaphore(device, frame.imageAvailableSemaphore, null)
@@ -553,9 +669,13 @@ class Context(
             vkDestroyImageView(device, frame.view, null)
         }
 
+        mDepthImage?.free()
+        mDepthImage = null
+
         vkDestroySwapchainKHR(device, mSwapchain, null)
 
         mPools.free()
+        mAllocator.free()
         mSurface.free()
         mDevice.free()
         mInstance.free()

@@ -15,3 +15,9 @@ tasks.test {
 application {
     mainClass = "kvk.MainKt"
 }
+
+// Run from the repo root so Config.workPath()/shaders resolves to
+// <root>/shaders (JavaApplication has no workingDir in Gradle 8.13).
+tasks.named<JavaExec>("run") {
+    workingDir = rootDir
+}

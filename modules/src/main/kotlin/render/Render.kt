@@ -5,9 +5,16 @@ import context.Context
 
 import org.lwjgl.vulkan.VK10.vkDeviceWaitIdle
 
-// Port of tire RenderVK (mainloop.cpp), reduced to the black screen pass.
+// Port of tire RenderVK (mainloop.cpp), reduced to the spinning cube pass.
 class Render(val context: Context) {
     private var mCurrentFrame: Int = 0
+    private val mTimer: Timer = Timer()
+    private val mTestBox: TestBox
+
+    init {
+        mTestBox = TestBox(context)
+        mTestBox.setPosition(0.0f, 0.0f, -2.5f)
+    }
 
     fun preLoop() {
         println("render loop starts here...")
@@ -26,8 +33,11 @@ class Render(val context: Context) {
             return
         }
 
-        // Empty body — black screen only.
-        context.renderScope(mCurrentFrame) { }
+        mTimer.update()
+
+        context.renderScope(mCurrentFrame) { cb ->
+            mTestBox.draw(cb, mTimer.floatFrameDuration())
+        }
 
         mCurrentFrame = (mCurrentFrame + 1) % Config.FRAMES_COUNT
     }
@@ -41,5 +51,6 @@ class Render(val context: Context) {
     }
 
     fun free() {
+        mTestBox.free()
     }
 }
