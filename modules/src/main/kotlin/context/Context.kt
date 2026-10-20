@@ -479,6 +479,7 @@ class Context(
                         .layerCount(1)
                 }
 
+            // CMDCALL
             vkCmdPipelineBarrier(
                 cb,
                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -529,6 +530,7 @@ class Context(
                 .pColorAttachments(colorAttachmentInfo)
                 .pDepthAttachment(depthAttachmentInfo)
 
+            // CMDCALL
             vkCmdBeginRendering(cb, renderingInfo)
 
             // Dynamic viewport. No performance penalty.
@@ -541,6 +543,8 @@ class Context(
                 .height(-mHeight.toFloat())
                 .minDepth(0.0f)
                 .maxDepth(1.0f)
+
+            // CMDCALL
             vkCmdSetViewport(cb, 0, viewport)
 
             val scissor = VkRect2D.calloc(1, stack)
@@ -550,11 +554,14 @@ class Context(
                 .extent { extent ->
                     extent.width(mWidth).height(mHeight)
                 }
+
+            // CMDCALL
             vkCmdSetScissor(cb, 0, scissor)
 
             // Record commands from the caller (empty for the black screen).
             block(cb)
 
+            // CMDCALL
             vkCmdEndRendering(cb)
 
             val toPresent = VkImageMemoryBarrier.calloc(1, stack)
@@ -575,6 +582,7 @@ class Context(
                         .layerCount(1)
                 }
 
+            // CMDCALL
             vkCmdPipelineBarrier(
                 cb,
                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -585,6 +593,7 @@ class Context(
                 toPresent
             )
 
+            // CMDCALL
             vkEndCommandBuffer(cb)
 
             val submitInfo = VkSubmitInfo.calloc(stack)
