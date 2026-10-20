@@ -4,6 +4,7 @@ import kotlin.random.Random
 
 import algebra.*
 import config.*
+import generator.*
 import graph.*
 import graphdsl.*
 import mesh.*
@@ -23,6 +24,9 @@ fun sparseObjectsGraph(program: FlatshadeProgram): Triple<StateGroup, StateGroup
 
     val arch01dObj = readWavefrontObjFile("${pathPrefix}/assets/bodies/arch01.obj")
     val arch01dMesh = SeparatedArraysMesh(arch01dObj)
+
+    val tubeMesh = InterleavedMesh(TubeMesh().toObjMesh("tube"))
+    val torusMesh = InterleavedMesh(TorusMesh().toObjMesh("torus"))
 
     // =================================================
 
@@ -50,6 +54,24 @@ fun sparseObjectsGraph(program: FlatshadeProgram): Triple<StateGroup, StateGroup
                         axis = randomVector3(-0.6f, 0.6f).normalize()
                         anglSpeed = randomFloat(-1.0f, 1.0f)
                     }
+                }
+            }
+            attachDrawable {
+                spinableDrawable {
+                    mesh = tubeMesh
+                    color = Vector3(0.9f, 0.6f, 0.2f)
+                    origin = Vector3(-2.0f, 0.0f, 0.0f)
+                    axis = Vector3(0.0f, 0.0f, 1.0f)
+                    anglSpeed = 0.6f
+                }
+            }
+            attachDrawable {
+                spinableDrawable {
+                    mesh = torusMesh
+                    color = Vector3(0.2f, 0.8f, 0.9f)
+                    origin = Vector3(2.0f, 0.0f, 0.0f)
+                    axis = Vector3(1.0f, 0.0f, 0.0f)
+                    anglSpeed = -0.6f
                 }
             }
         }
