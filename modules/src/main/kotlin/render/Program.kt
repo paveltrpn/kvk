@@ -111,16 +111,19 @@ class Program(val context: Context, source: TextProgramSource) : ResourceBase() 
     // ByteBuffer the caller must free with MemoryUtil.memFree.
     private fun compile(stage: ShaderStageType, text: String): ByteBuffer {
         val compiler = shaderc_compiler_initialize()
+
         if (compiler == MemoryUtil.NULL) {
             throw RuntimeException("failed to initialize shaderc compiler")
         }
 
         val options = shaderc_compile_options_initialize()
+
         shaderc_compile_options_set_target_env(options, shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3)
 
         val result = shaderc_compile_into_spv(compiler, text, shadercKind(stage), "source", "main", options)
 
         val status = shaderc_result_get_compilation_status(result)
+
         if (status != shaderc_compilation_status_success) {
             val message = shaderc_result_get_error_message(result)
             shaderc_result_release(result)
@@ -131,6 +134,7 @@ class Program(val context: Context, source: TextProgramSource) : ResourceBase() 
 
         val bytes = shaderc_result_get_bytes(result)!!
         val bytecode = MemoryUtil.memAlloc(bytes.remaining())
+        
         bytecode.put(bytes)
         bytecode.flip()
 
@@ -149,6 +153,7 @@ class Program(val context: Context, source: TextProgramSource) : ResourceBase() 
                 .pCode(bytecode)
 
             val moduleBuf = stack.mallocLong(1)
+
             when (val result = vkCreateShaderModule(context.device, createInfo, null, moduleBuf)) {
                 VK_SUCCESS -> {
                     println("shader module for stage $stage created")

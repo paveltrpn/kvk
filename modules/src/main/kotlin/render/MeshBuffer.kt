@@ -62,8 +62,10 @@ abstract class MeshBuffer(val context: Context) : ResourceBase() {
             // Copy data into the staging buffer.
             val mappedPtr = stack.mallocPointer(1)
             vmaMapMemory(context.allocator, stagingAllocation, mappedPtr)
+
             val mapped = MemoryUtil.memFloatBuffer(mappedPtr.get(0), data.size)
             mapped.put(data)
+
             vmaUnmapMemory(context.allocator, stagingAllocation)
 
             // Device-local vertex buffer.

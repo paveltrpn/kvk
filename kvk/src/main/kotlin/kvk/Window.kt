@@ -45,10 +45,10 @@ class Window {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE)
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
 
-        val WIDTH = 800
-        val HEIGHT = 600
+        val WIDTH = 1600
+        val HEIGHT = 800
 
-        mWindow = glfwCreateWindow(WIDTH, HEIGHT, "another tire", NULL, NULL)
+        mWindow = glfwCreateWindow(WIDTH, HEIGHT, "kvk", NULL, NULL)
         if (mWindow == NULL) {
             throw RuntimeException("Failed to create the GLFW window")
         }
@@ -63,6 +63,7 @@ class Window {
         val (diamonds, frames, arches) = sparseObjectsGraph(mRender.flatshade)
 
         val (width, height) = mContext.viewportSize()
+
         val mainScene = Scene(width.toFloat() / height.toFloat())
 
         val locale = Locale()

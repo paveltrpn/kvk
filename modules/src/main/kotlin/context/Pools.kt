@@ -17,6 +17,7 @@ class Pools(val device: Device) : ResourceBase() {
                 .queueFamilyIndex(device.mGraphicsQueueNodeIndex)
 
             val commandPoolBuf = stack.mallocLong(1)
+            
             when (val result = vkCreateCommandPool(device.mLogicalDevice, poolInfo, null, commandPoolBuf)) {
                 VK_SUCCESS -> {
                     println("command pool created")
@@ -26,6 +27,7 @@ class Pools(val device: Device) : ResourceBase() {
                     throw RuntimeException("failed to create command pool: $result")
                 }
             }
+
             mCommandPool = commandPoolBuf.get(0)
 
             val sizes = VkDescriptorPoolSize.calloc(4, stack)

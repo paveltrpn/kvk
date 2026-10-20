@@ -183,7 +183,7 @@ class Device(val instance: VkInstance, surface: Long) : ResourceBase() {
         } else if (integratedGpuId != -1) {
             integratedGpuId
         } else if (cpuGpuId != -1) {
-            cpuGpuId;
+            cpuGpuId
         } else {
             throw RuntimeException("no suitable vulkan devices found");
         }
@@ -199,7 +199,7 @@ class Device(val instance: VkInstance, surface: Long) : ResourceBase() {
             val supportsPresent = stack.mallocInt(queueProps.capacity());
             var graphicsQueueNodeIndex: Int = Integer.MAX_VALUE
             var presentQueueNodeIndex: Int = Integer.MAX_VALUE
-            
+
             for (i in 0..<supportsPresent.capacity()) {
                 supportsPresent.position(i);
                 vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, surface, supportsPresent);
