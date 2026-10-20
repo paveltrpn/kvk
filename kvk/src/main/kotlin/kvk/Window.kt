@@ -5,7 +5,10 @@ import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.system.MemoryUtil.*
 
 import context.*
+import graph.*
 import render.*
+
+import kvk.testgraph.sparseObjectsGraph
 
 import org.lwjgl.system.Configuration;
 
@@ -56,6 +59,18 @@ class Window {
         // Create global render object.
         mRender = Render(mContext)
 
+        // Main scene init (mirrors kogl Window scene setup).
+        val (diamonds, frames, arches) = sparseObjectsGraph(mRender.flatshade)
+
+        val (width, height) = mContext.viewportSize()
+        val mainScene = Scene(width.toFloat() / height.toFloat())
+
+        val locale = Locale()
+        locale.addStateGroups(listOf(diamonds, frames, arches))
+        mainScene.addLocale(locale)
+
+        mRender.scene = mainScene
+
         glfwSetWindowSizeLimits(mWindow, WIDTH, HEIGHT, GLFW_DONT_CARE, GLFW_DONT_CARE)
 
         //glfwSetWindowAspectRatio(window, 1, 1);
@@ -69,11 +84,61 @@ class Window {
             (vidmode.height() - HEIGHT) / 2
         )
 
+        glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN)
+
         glfwSetKeyCallback(mWindow, { window, key, scancode, action, mods ->
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) glfwSetWindowShouldClose(
                 window,
                 true
             ) // We will detect this in the rendering loop
+
+            if (action == GLFW_PRESS) {
+                when (key) {
+                    GLFW_KEY_W -> {
+                        mRender.scene.camera.setMoveBit(FlycamMoveBits.FORWARD)
+                    }
+
+                    GLFW_KEY_A -> {
+                        mRender.scene.camera.setMoveBit(FlycamMoveBits.LEFT)
+                    }
+
+                    GLFW_KEY_S -> {
+                        mRender.scene.camera.setMoveBit(FlycamMoveBits.BACKWARD)
+                    }
+
+                    GLFW_KEY_D -> {
+                        mRender.scene.camera.setMoveBit(FlycamMoveBits.RIGHT)
+                    }
+                }
+            }
+
+            if (action == GLFW_RELEASE) {
+                when (key) {
+                    GLFW_KEY_W -> {
+                        mRender.scene.camera.unsetMoveBit(FlycamMoveBits.FORWARD)
+                    }
+
+                    GLFW_KEY_A -> {
+                        mRender.scene.camera.unsetMoveBit(FlycamMoveBits.LEFT)
+                    }
+
+                    GLFW_KEY_S -> {
+                        mRender.scene.camera.unsetMoveBit(FlycamMoveBits.BACKWARD)
+                    }
+
+                    GLFW_KEY_D -> {
+                        mRender.scene.camera.unsetMoveBit(FlycamMoveBits.RIGHT)
+                    }
+                }
+            }
+        })
+
+        glfwSetCursorPosCallback(mWindow, { window, xpos, ypos ->
+            val sensitivity = 0.005f
+            mRender.scene.camera.rotate(
+                (400.0 - xpos).toFloat() * sensitivity,
+                (300.0 - ypos).toFloat() * sensitivity
+            )
         })
 
         glfwShowWindow(mWindow)
@@ -83,6 +148,10 @@ class Window {
         mRender.preLoop()
 
         while (!glfwWindowShouldClose(mWindow)) {
+            // Re-center the hidden cursor each frame so the camera rotate
+            // offset is always relative to the window center (kogl loop).
+            glfwSetCursorPos(mWindow, 400.0, 300.0)
+
             glfwPollEvents()
             mRender.frame()
         }

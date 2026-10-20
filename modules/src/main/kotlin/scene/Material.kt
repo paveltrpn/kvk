@@ -1,5 +1,0 @@
-package scene
-
-class Material {
-    
-}

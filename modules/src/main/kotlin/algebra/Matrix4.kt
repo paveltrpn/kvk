@@ -12,7 +12,7 @@ class Matrix4 {
     }
 
     constructor(other: Matrix4) {
-        _data = other._data
+        _data = other._data.copyOf()
     }
 
     constructor(other: FloatArray) {
@@ -23,6 +23,10 @@ class Matrix4 {
         get(): FloatArray {
             return _data
         }
+
+    fun copy(): Matrix4 {
+        return Matrix4(this)
+    }
 
     // Rows
     var row0: Vector4

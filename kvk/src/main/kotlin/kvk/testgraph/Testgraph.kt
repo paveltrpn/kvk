@@ -1,0 +1,109 @@
+package kvk.testgraph
+
+import kotlin.random.Random
+
+import algebra.*
+import config.*
+import graph.*
+import graphdsl.*
+import mesh.*
+import render.*
+
+// Port of kogl Tastgraph.sparseObjectsGraph() (Tastgraph.kt:14-125),
+// minus testCubesGraph and the GL program setup - the single flatshade
+// program is passed in.
+fun sparseObjectsGraph(program: FlatshadeProgram): Triple<StateGroup, StateGroup, StateGroup> {
+    val pathPrefix = Config.workPath()
+
+    val frameObj = readWavefrontObjFile("${pathPrefix}/assets/bodies/frame.obj")
+    val frameMesh = InterleavedMesh(frameObj)
+
+    val diamondObj = readWavefrontObjFile("${pathPrefix}/assets/bodies/diamond.obj")
+    val diamondMesh = SeparatedArraysMesh(diamondObj)
+
+    val arch01dObj = readWavefrontObjFile("${pathPrefix}/assets/bodies/arch01.obj")
+    val arch01dMesh = SeparatedArraysMesh(arch01dObj)
+
+    // =================================================
+
+    val frameStateGroup = StateGroup(program)
+    val arch01StateGroup = StateGroup(program)
+
+    val randomFloat: (Float, Float) -> Float = { from: Float, to: Float ->
+        from + Random.nextFloat() * (to - from)
+    }
+
+    val randomVector3: (Float, Float) -> Vector3 = { from: Float, to: Float ->
+        val list = List(3) { from + Random.nextFloat() * (to - from) }
+        Vector3(list[0], list[1], list[2])
+    }
+
+    val diamondStateGroup = buildState {
+        stateGroup {
+            this.program = program
+            repeat(16) {
+                attachDrawable {
+                    spinableDrawable {
+                        mesh = diamondMesh
+                        color = randomVector3(0.1f, 0.9f)
+                        origin = randomVector3(-4.0f, 4.0f)
+                        axis = randomVector3(-0.6f, 0.6f).normalize()
+                        anglSpeed = randomFloat(-1.0f, 1.0f)
+                    }
+                }
+            }
+        }
+    }
+
+    repeat(16) {
+        val item = FlyaroundDrawable(frameMesh).apply {
+            color = randomVector3(0.1f, 0.9f)
+            origin = Vector3(0.0f, 0.0f, 0.0f)
+            axis = randomVector3(-0.6f, 0.6f).normalize()
+            anglSpeed = randomFloat(0.4f, 1.2f)
+        }
+
+        val transform = buildTransform {
+            offset {
+                offset = randomVector3(-4.0f, 4.0f)
+                attachTransform {
+                    scale {
+                        val sf = randomFloat(0.4f, 2.0f)
+                        scale = Vector3(sf, sf, sf)
+                    }
+                }
+            }
+        }
+
+        with(transform) {
+            attachDrawable {
+                this set item
+            }
+        }
+
+        frameStateGroup.addChild(transform)
+    }
+
+    repeat(16) {
+        val item = FlyaroundDrawable(arch01dMesh).apply {
+            color = randomVector3(0.1f, 0.9f)
+            origin = Vector3(0.0f, 0.0f, 0.0f)
+            axis = randomVector3(-0.6f, 0.6f).normalize()
+            anglSpeed = randomFloat(0.4f, 1.2f)
+        }
+
+        val scale = TransformGroup()
+        val sf = randomFloat(0.4f, 2.0f)
+        scale.matrix = algebra.scale(sf, sf, sf)
+
+        val offset = TransformGroup()
+        val rtv = randomVector3(-4.0f, 4.0f)
+        offset.matrix = algebra.offset(rtv.x, rtv.y, rtv.z)
+
+        scale.addChild(item)
+        offset.addChild(scale)
+        arch01StateGroup.addChild(offset)
+    }
+
+    return Triple(diamondStateGroup, frameStateGroup, arch01StateGroup)
+}

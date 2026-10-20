@@ -1,0 +1,189 @@
+package graph
+
+import algebra.Vector3
+import algebra.Matrix4
+import context.Context
+import org.lwjgl.vulkan.VkCommandBuffer
+import render.*
+import mesh.*
+
+// ============================================================================
+// ======================= Drawable ===========================================
+// ============================================================================
+
+abstract class Drawable : Leaf {
+    private var _mesh: Mesh? = null
+    private var _buffer: MeshBuffer? = null
+
+    protected var _color = Vector3(1.0f, 1.0f, 1.0f)
+    protected var _modelMatrix = Matrix4().idtt()
+
+    protected var _origin = Vector3(0.0f, 0.0f, 0.0f)
+    protected var _scale = Vector3(1.0f, 1.0f, 1.0f)
+    protected var _axis = Vector3(0.0f, 1.0f, 0.0f)
+    protected var _angl = 0.0f
+    protected var _anglSpeed = 0.0f
+
+    constructor() : super() {}
+
+    constructor(mesh: Mesh) : super() {
+        _mesh = mesh
+    }
+
+    var mesh: Mesh
+        get(): Mesh {
+            return _mesh!!
+        }
+        set(value) {
+            _mesh = value
+        }
+
+    val buffer: MeshBuffer
+        get(): MeshBuffer {
+            return _buffer ?: throw RuntimeException("Drawable buffer not uploaded! Call Scene.upload(context) first.")
+        }
+
+    // kvk has no global render context - vulkan resources are created by an
+    // explicit Scene.upload(context) tree walk after the graph is built.
+    fun upload(context: Context): Unit {
+        if (_buffer != null) {
+            return
+        }
+
+        when (val mesh = _mesh) {
+            is SeparatedArraysMesh -> {
+                _buffer = ArrayMeshBuffer(context, mesh)
+            }
+
+            is InterleavedMesh -> {
+                _buffer = InterleavedMeshBuffer(context, mesh)
+            }
+
+            else -> {
+            }
+        }
+    }
+
+    fun free(): Unit {
+        _buffer?.free()
+        _buffer = null
+    }
+
+    var origin: Vector3
+        get(): Vector3 {
+            return _origin
+        }
+        set(value) {
+            _origin = value
+        }
+
+    var scale: Vector3
+        get(): Vector3 {
+            return _scale
+        }
+        set(value) {
+            _scale = value
+        }
+
+    var axis: Vector3
+        get(): Vector3 {
+            return _axis
+        }
+        set(value: Vector3) {
+            // TODO: assert zero length vector.
+            _axis = value
+            _axis.normalizeSelf()
+        }
+
+    var angl: Float
+        get(): Float {
+            return _angl
+        }
+        set(value) {
+            _angl = value
+        }
+
+    var anglSpeed: Float
+        get(): Float {
+            return _anglSpeed
+        }
+        set(value) {
+            _anglSpeed = value
+        }
+
+    open fun draw(cb: VkCommandBuffer): Unit {
+        _buffer?.recordDraw(cb)
+    }
+
+    fun applyTransform(tr: Matrix4): Unit {
+        _modelMatrix = tr
+    }
+
+    var modelMatrix: Matrix4
+        get(): Matrix4 {
+            return _modelMatrix
+        }
+        set(value) {
+            _modelMatrix = value
+        }
+
+    var color: Vector3
+        get(): Vector3 {
+            return _color
+        }
+        set(value) {
+            _color = value
+        }
+
+    protected val offsetMatrix: Matrix4
+        get(): Matrix4 {
+            val offset = algebra.offset(_origin)
+            offset.transpose()
+            return offset
+        }
+
+    protected val scaleMatrix: Matrix4
+        get(): Matrix4 {
+            return algebra.scale(_scale)
+        }
+
+    protected fun updateAnglAndGetSpinMatrix(dt: Float): Matrix4 {
+        _angl += anglSpeed * dt
+
+        if (_angl > 360.0f || _angl < -360.0f) _angl = 0.0f
+
+        return algebra.rotation(_axis, _angl)
+    }
+}
+
+// ============================================================================
+// ======================= SpinableDrawable ===================================
+// ============================================================================
+
+class SpinableDrawable : Drawable {
+    constructor() : super() {}
+
+    constructor(mesh: Mesh) : super(mesh) {}
+
+    fun updateLocal(dt: Float): Matrix4 {
+        val spinMatrix = updateAnglAndGetSpinMatrix(dt)
+        val t = scaleMatrix.multiply(spinMatrix)
+        return t.multiply(offsetMatrix)
+    }
+}
+
+// ============================================================================
+// ======================= FlyaroundDrawable ==================================
+// ============================================================================
+
+class FlyaroundDrawable : Drawable {
+    constructor() : super() {}
+
+    constructor(mesh: Mesh) : super(mesh) {}
+
+    fun updateLocal(dt: Float): Matrix4 {
+        val spinMatrix = updateAnglAndGetSpinMatrix(dt)
+        val t = offsetMatrix.multiply(scaleMatrix)
+        return t.multiply(spinMatrix)
+    }
+}
