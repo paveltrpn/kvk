@@ -1,6 +1,9 @@
 # Rules  
 
 # Code  
+- Start all privane class members from "_".  
+- Start all other class members from "m" in camelCase.  
 - No trailing semicolons.  
 - No ternary operators, only explicit "if" statements.  
 - No "short" if statments, always brace-enclosed.  
+- Use maximum verbose lambda syntax.

@@ -37,10 +37,14 @@ class Context(
     var swapchainOutdated: Boolean = false
         private set
 
+    // Here is all vulkan related objects are created!
     init {
         mSurface = Surface(instance, window)
+
         mDevice = Device(instance, surface)
+
         mSurface.queryCapabilities(mDevice)
+
         mPools = Pools(mDevice)
 
         println("picked physical device name: $deviceName")
@@ -245,6 +249,7 @@ class Context(
                         throw RuntimeException("failed to create semaphore: $result")
                     }
                 }
+
                 frame.imageAvailableSemaphore = handleBuf.get(0)
 
                 when (val result = vkCreateSemaphore(device, semaphoreInfo, null, handleBuf)) {
@@ -255,6 +260,7 @@ class Context(
                         throw RuntimeException("failed to create semaphore: $result")
                     }
                 }
+
                 frame.renderFinishedSemaphore = handleBuf.get(0)
 
                 when (val result = vkCreateFence(device, fenceInfo, null, handleBuf)) {
@@ -265,6 +271,7 @@ class Context(
                         throw RuntimeException("failed to create fence: $result")
                     }
                 }
+                
                 frame.inFlightFence = handleBuf.get(0)
 
                 val allocInfo = VkCommandBufferAllocateInfo.calloc(stack)
