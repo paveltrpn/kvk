@@ -85,8 +85,6 @@ class Window {
         }
 
         render.postLoop()
-
-        destroy()
     }
 
     fun destroy() {
