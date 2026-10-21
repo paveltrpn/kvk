@@ -13,6 +13,8 @@ class Userinterface(val context: Context) : WindowEventEmitter() {
     private var _mousePosX: Int = 0
     private var _mousePosY: Int = 0
 
+    private var _holdMouse: Boolean = false
+
     var windowWidth: Int
         get() = _windowWidth
         set(value) {
@@ -48,6 +50,13 @@ class Userinterface(val context: Context) : WindowEventEmitter() {
         set(value) {
             _mousePosY = value
         }
+
+    var holdMouse: Boolean
+        get() = _holdMouse
+        set(value) {
+            _holdMouse = value
+        }
+
 
     fun free() {
     }

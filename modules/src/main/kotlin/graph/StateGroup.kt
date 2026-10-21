@@ -4,7 +4,7 @@ import render.*
 
 /**
  * StateGroup sits on top of scene subgraph, connects direct to locale object
- * and holds shader program that bind on every traversal begin.
+ * and holds pipeline, shader set and other that bind on every traversal begin.
  */
 open class StateGroup : Group {
     lateinit var program: FlatshadeProgram

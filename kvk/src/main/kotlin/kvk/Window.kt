@@ -3,6 +3,7 @@ package kvk
 import org.lwjgl.glfw.*
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.system.MemoryUtil.*
+import org.lwjgl.system.Configuration
 
 import context.*
 import graph.*
@@ -12,8 +13,6 @@ import events.*
 import userinterface.*
 
 import kvk.testgraph.sparseObjectsGraph
-
-import org.lwjgl.system.Configuration;
 
 class Window {
     private var mAllocator: GLFWAllocator? = null
@@ -93,13 +92,12 @@ class Window {
 
         mRender.scene = mainScene
 
-        // glfwSetWindowSizeLimits(mWindow, WIDTH, HEIGHT, GLFW_DONT_CARE, GLFW_DONT_CARE)
+//        glfwSetWindowSizeLimits(mWindow, WIDTH, HEIGHT, GLFW_DONT_CARE, GLFW_DONT_CARE)
 
-        //glfwSetWindowAspectRatio(window, 1, 1);
-        val monitor = glfwGetPrimaryMonitor()
+//        glfwSetWindowAspectRatio(window, 1, 1);
 
-        val vidmode: GLFWVidMode? = glfwGetVideoMode(monitor)
-
+//        val monitor = glfwGetPrimaryMonitor()
+//        val vidmode: GLFWVidMode? = glfwGetVideoMode(monitor)
 //        glfwSetWindowPos(
 //            mWindow,
 //            (vidmode!!.width() - mUserinterface.windowWidth) / 2,
@@ -122,11 +120,23 @@ class Window {
                 val keyEvent = WindowKeyPressEvent(key)
                 mUserinterface.notify(keyEvent)
 
-                // One single action that we must check.
-                if (mRender.holdMouse) {
-                    glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN)
-                } else {
-                    glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
+                when (key) {
+                    GLFW_KEY_ESCAPE -> {
+                        glfwSetWindowShouldClose(
+                            window,
+                            true
+                        )
+                    }
+
+                    GLFW_KEY_G -> {
+                        mUserinterface.holdMouse = !mUserinterface.holdMouse
+
+                        if (mUserinterface.holdMouse) {
+                            glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN)
+                        } else {
+                            glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
+                        }
+                    }
                 }
             }
 
@@ -137,8 +147,16 @@ class Window {
         })
 
         glfwSetCursorPosCallback(mWindow, { window, xpos, ypos ->
-            val mouseEvent = WindowMouseMoveEvent(xpos.toInt(), ypos.toInt())
-            mUserinterface.notify(mouseEvent)
+            if (!mUserinterface.holdMouse) {
+                val mouseEvent = WindowMouseMoveEvent(xpos.toInt(), ypos.toInt())
+                mUserinterface.notify(mouseEvent)
+            } else {
+                val offsetX = 400 - xpos.toInt()
+                val offsetY = 300 - ypos.toInt()
+
+                val mouseEvent = WindowMouseOffsetEvent(offsetX, offsetY)
+                mUserinterface.notify(mouseEvent)
+            }
         })
 
         glfwShowWindow(mWindow)
@@ -148,7 +166,7 @@ class Window {
         mRender.preLoop()
 
         while (!glfwWindowShouldClose(mWindow)) {
-            if (mRender.holdMouse) {
+            if (mUserinterface.holdMouse) {
                 glfwSetCursorPos(mWindow, 400.0, 300.0)
             }
 

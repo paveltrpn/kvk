@@ -14,6 +14,8 @@ data class WindowMouseRelease(val keyCode: Int) : WindowEvent {}
 
 data class WindowMouseMoveEvent(val posX: Int, val posY: Int) : WindowEvent {}
 
+data class WindowMouseOffsetEvent(val offsetX: Int, val offsetY: Int) : WindowEvent {}
+
 data class WindowKeyPressEvent(val keyCode: Int) : WindowEvent {}
 
 data class WindowKeyReleaseEvent(val keyCode: Int) : WindowEvent {}

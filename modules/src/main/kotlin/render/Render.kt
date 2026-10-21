@@ -18,19 +18,10 @@ class Render(val context: Context) : WindowEventObserver {
     private val mTimer: Timer = Timer()
     private var mScene: Scene? = null
 
-    private var _holdMouse: Boolean
-
     private val _mouseSensitivity = 0.005f
 
     init {
-        _holdMouse = true
     }
-
-    var holdMouse: Boolean
-        get() = _holdMouse
-        set(value) {
-            _holdMouse = value
-        }
 
     var scene: Scene
         get(): Scene {
@@ -112,10 +103,6 @@ class Render(val context: Context) : WindowEventObserver {
                     68 -> {
                         scene.camera.setMoveBit(FlycamMoveBits.RIGHT)
                     }
-
-                    71 -> {
-                        holdMouse = !holdMouse
-                    }
                 }
             }
 
@@ -139,13 +126,11 @@ class Render(val context: Context) : WindowEventObserver {
                 }
             }
 
-            is WindowMouseMoveEvent -> {
-                if (holdMouse) {
-                    scene.camera.rotate(
-                        (400.0 - event.posX).toFloat() * _mouseSensitivity,
-                        (300.0 - event.posY).toFloat() * _mouseSensitivity
-                    )
-                }
+            is WindowMouseOffsetEvent -> {
+                scene.camera.rotate(
+                    event.offsetX.toFloat() * _mouseSensitivity,
+                    event.offsetY.toFloat() * _mouseSensitivity
+                )
             }
         }
     }
