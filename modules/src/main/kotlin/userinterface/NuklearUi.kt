@@ -1,5 +1,6 @@
 package userinterface
 
+import config.Config
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.*
@@ -59,10 +60,20 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
         var atlasPixels: ByteBuffer? = null
 
         MemoryStack.stackPush().use { stack ->
-            val bakedFont = nk_font_atlas_add_default(_atlas, _FONT_HEIGHT, null)
+            val bakedFont =
+                nk_font_atlas_add_from_file(
+                    _atlas,
+                    Config.instance().workPath + "/assets/LessPerfectDOSVGA.ttf",
+                    18f,
+                    null
+                )
+
+//            val bakedFont = nk_font_atlas_add_default(_atlas, _FONT_HEIGHT, null)
+
             if (bakedFont == null) {
                 throw RuntimeException("failed to add default font to nuklear font atlas")
             }
+
             font = bakedFont
 
             val widthBuf = stack.mallocInt(1)
@@ -74,7 +85,8 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
         }
 
         val pixels = atlasPixels
-        if (pixels == null) {
+
+        if (atlasPixels == null) {
             throw RuntimeException("failed to bake nuklear font atlas")
         }
 
@@ -148,9 +160,7 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
         nk_input_begin(_ctx)
 
         while (_eventQueue.isNotEmpty()) {
-            val event = _eventQueue.removeFirst()
-
-            when (event) {
+            when (val event = _eventQueue.removeFirst()) {
                 is WindowMouseMoveEvent -> {
                     _mouseX = event.posX
                     _mouseY = event.posY
