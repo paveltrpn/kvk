@@ -46,12 +46,12 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
         nk_font_atlas_init(_atlas, _allocator)
         nk_font_atlas_begin(_atlas)
 
-        val font: NkFont
+        var bakedFont: NkFont?
 
         _backend = NuklearVulkanBackend(context)
 
         MemoryStack.stackPush().use { stack ->
-            val bakedFont =
+            bakedFont =
                 nk_font_atlas_add_from_file(
                     _atlas,
                     Config.instance().workPath + "/assets/LessPerfectDOSVGA.ttf",
@@ -59,29 +59,28 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
                     null
                 )
 
-            if (bakedFont == null) {
-                throw RuntimeException("failed to add default font to nuklear font atlas")
-            }
-
-            font = bakedFont
-
             val widthBuf = stack.mallocInt(1)
             val heightBuf = stack.mallocInt(1)
 
             val atlasPixels = nk_font_atlas_bake(_atlas, widthBuf, heightBuf, NK_FONT_ATLAS_RGBA32)
 
-            if (atlasPixels == null) {
+            if (atlasPixels != null) {
+                _backend.uploadFontTexture(atlasPixels, widthBuf.get(0), heightBuf.get(0))
+            } else {
                 throw RuntimeException("failed to bake nuklear font atlas")
             }
 
-            _backend.uploadFontTexture(atlasPixels, widthBuf.get(0), heightBuf.get(0))
         }
 
         val TEXTURE_ID = 1
         nk_handle_id(TEXTURE_ID, _textureHandle)
         nk_font_atlas_end(_atlas, _textureHandle, _drawNullTexture)
 
-        nk_style_set_font(_ctx, font.handle())
+        if (bakedFont != null) {
+            nk_style_set_font(_ctx, bakedFont.handle())
+        } else {
+            throw RuntimeException("failed to add default font to nuklear font atlas")
+        }
 
         _vertexLayout.get(0)
             .attribute(NK_VERTEX_POSITION)

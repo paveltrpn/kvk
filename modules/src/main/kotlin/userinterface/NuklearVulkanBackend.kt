@@ -23,12 +23,6 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 class NuklearVulkanBackend(val context: Context) : ResourceBase() {
-
-    companion object {
-        private const val _INITIAL_VERTEX_SIZE: Long = 512L * 1024L
-        private const val _INITIAL_INDEX_SIZE: Long = 128L * 1024L
-    }
-
     private class FrameBuffers {
         var mVertexBuffer: Long = VK_NULL_HANDLE
         var mVertexAllocation: Long = VK_NULL_HANDLE
@@ -364,6 +358,48 @@ class NuklearVulkanBackend(val context: Context) : ResourceBase() {
             val elemCount = command.elem_count()
 
             if (elemCount > 0) {
+
+                // === Record draw command === //
+
+                val recordDrawCommand: (
+                    VkCommandBuffer,
+                    NkDrawCommand,
+                    Int,
+                    Int,
+                    Int
+                ) -> Unit = { cb: VkCommandBuffer,
+                              command: NkDrawCommand,
+                              indexOffset: Int,
+                              width: Int,
+                              height: Int ->
+                    val clip = command.clip_rect()
+
+                    val x0 = maxOf(0, floor(clip.x().toDouble()).toInt())
+                    val y0 = maxOf(0, floor(clip.y().toDouble()).toInt())
+                    val x1 = minOf(width, ceil((clip.x() + clip.w()).toDouble()).toInt())
+                    val y1 = minOf(height, ceil((clip.y() + clip.h()).toDouble()).toInt())
+
+                    if (!(x1 <= x0 || y1 <= y0)) {
+                        mStack.push().use { stack ->
+                            val scissor = VkRect2D.calloc(1, stack)
+                                .offset { offset ->
+                                    offset
+                                        .x(x0)
+                                        .y(y0)
+                                }
+                                .extent { extent ->
+                                    extent
+                                        .width(x1 - x0)
+                                        .height(y1 - y0)
+                                }
+
+                            vkCmdSetScissor(cb, 0, scissor)
+                        }
+
+                        vkCmdDrawIndexed(cb, command.elem_count(), 1, indexOffset, 0, 0)
+                    }
+                }
+
                 recordDrawCommand(cb, command, indexOffset, width, height)
             }
 
@@ -376,6 +412,7 @@ class NuklearVulkanBackend(val context: Context) : ResourceBase() {
         for (frame in _frames) {
             freeFrameBuffers(frame)
         }
+        
         _frames.clear()
 
         vkDestroyPipeline(context.device, _pipeline, null)
@@ -389,47 +426,14 @@ class NuklearVulkanBackend(val context: Context) : ResourceBase() {
         vmaDestroyImage(context.allocator, _fontImage, _fontAllocation)
     }
 
-    private fun recordDrawCommand(
-        cb: VkCommandBuffer,
-        command: NkDrawCommand,
-        indexOffset: Int,
-        width: Int,
-        height: Int
-    ) {
-        val clip = command.clip_rect()
-
-        val x0 = maxOf(0, floor(clip.x().toDouble()).toInt())
-        val y0 = maxOf(0, floor(clip.y().toDouble()).toInt())
-        val x1 = minOf(width, ceil((clip.x() + clip.w()).toDouble()).toInt())
-        val y1 = minOf(height, ceil((clip.y() + clip.h()).toDouble()).toInt())
-
-        if (x1 <= x0 || y1 <= y0) {
-            return
-        }
-
-        mStack.push().use { stack ->
-            val scissor = VkRect2D.calloc(1, stack)
-                .offset { offset ->
-                    offset
-                        .x(x0)
-                        .y(y0)
-                }
-                .extent { extent ->
-                    extent
-                        .width(x1 - x0)
-                        .height(y1 - y0)
-                }
-
-            vkCmdSetScissor(cb, 0, scissor)
-        }
-
-        vkCmdDrawIndexed(cb, command.elem_count(), 1, indexOffset, 0, 0)
-    }
-
     private fun initFrameBuffers() {
         for (i in 0..<_framesCount) {
             val frame = FrameBuffers()
+
+            val _INITIAL_VERTEX_SIZE = 512L * 1024L
+            val _INITIAL_INDEX_SIZE = 128L * 1024L
             allocateFrameBuffers(frame, _INITIAL_VERTEX_SIZE, _INITIAL_INDEX_SIZE)
+
             _frames.add(frame)
         }
     }
