@@ -12,7 +12,7 @@ import context.Context
 import events.*
 import render.UiDrawable
 
-class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
+class NuklearUi(val context: Context, val backend: NuklearVulkanBackend) : UiDrawable, WindowEventObserver {
     private val _allocator: NkAllocator = NkAllocator.create()
         .alloc(NkPluginAllocI { handle: Long, old: Long, size: Long -> nmemAllocChecked(size) })
         .mfree(NkPluginFreeI { handle: Long, ptr: Long -> nmemFree(ptr) })
@@ -32,8 +32,6 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
 
     private val _eventQueue: ArrayDeque<WindowEvent> = ArrayDeque()
 
-    private val _backend: NuklearVulkanBackend
-
     private var _mouseX: Int = 0
     private var _mouseY: Int = 0
     private var _frameIndex: Int = 0
@@ -47,8 +45,6 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
         nk_font_atlas_begin(_atlas)
 
         var bakedFont: NkFont?
-
-        _backend = NuklearVulkanBackend(context)
 
         MemoryStack.stackPush().use { stack ->
             bakedFont =
@@ -65,7 +61,7 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
             val atlasPixels = nk_font_atlas_bake(_atlas, widthBuf, heightBuf, NK_FONT_ATLAS_RGBA32)
 
             if (atlasPixels != null) {
-                _backend.uploadFontTexture(atlasPixels, widthBuf.get(0), heightBuf.get(0))
+                backend.uploadFontTexture(atlasPixels, widthBuf.get(0), heightBuf.get(0))
             } else {
                 throw RuntimeException("failed to bake nuklear font atlas")
             }
@@ -188,13 +184,13 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
 
         buildWidgets()
 
-        _backend.convert(_ctx, _cmds, _vbuf, _ebuf, _convertConfig, frameIndex)
+        backend.convert(_ctx, _cmds, _vbuf, _ebuf, _convertConfig, frameIndex)
 
         nk_clear(_ctx)
     }
 
     override fun draw(cb: VkCommandBuffer) {
-        _backend.draw(cb, _ctx, _cmds, _frameIndex)
+        backend.draw(cb, _ctx, _cmds, _frameIndex)
     }
 
     override fun free() {
@@ -204,8 +200,6 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
 
         nk_font_atlas_clear(_atlas)
         nk_free(_ctx)
-
-        _backend.free()
 
         _cmds.free()
         _vbuf.free()

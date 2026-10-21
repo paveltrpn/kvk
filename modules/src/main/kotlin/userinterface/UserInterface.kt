@@ -5,7 +5,8 @@ import events.*
 import render.UiDrawable
 
 class Userinterface(val context: Context) : WindowEventEmitter() {
-    private val _nuklearUi: NuklearUi = NuklearUi(context)
+    private val _nuklearBackend: NuklearVulkanBackend = NuklearVulkanBackend(context)
+    private val _nuklearInterface: NuklearUi = NuklearUi(context, _nuklearBackend)
 
     private var _windowWidth: Int = 0
     private var _windowHeight: Int = 0
@@ -62,19 +63,20 @@ class Userinterface(val context: Context) : WindowEventEmitter() {
 
     val ui: UiDrawable
         get(): UiDrawable {
-            return _nuklearUi
+            return _nuklearInterface
         }
 
     init {
-        attach(_nuklearUi)
+        attach(_nuklearInterface)
     }
 
     fun update(frameIndex: Int) {
-        _nuklearUi.update(frameIndex)
+        _nuklearInterface.update(frameIndex)
     }
 
     fun free() {
-        _nuklearUi.free()
+        _nuklearInterface.free()
+        _nuklearBackend.free()
     }
 }
 
