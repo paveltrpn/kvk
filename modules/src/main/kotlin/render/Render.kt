@@ -20,6 +20,13 @@ class Render(val context: Context) : WindowEventObserver {
 
     private val _mouseSensitivity = 0.005f
 
+    var ui: UiDrawable? = null
+
+    val currentFrame: Int
+        get(): Int {
+            return mCurrentFrame
+        }
+
     init {
     }
 
@@ -61,6 +68,7 @@ class Render(val context: Context) : WindowEventObserver {
         context.renderScope(mCurrentFrame) { cb ->
             // mTestBox.draw(cb, mTimer.floatFrameDuration())
             scene.walk(cb)
+            ui?.draw(cb)
         }
 
         mCurrentFrame = (mCurrentFrame + 1) % Config.instance().konfig.frame_count

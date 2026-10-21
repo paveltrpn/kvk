@@ -80,6 +80,8 @@ class Window {
 
         mUserinterface.attach(mRender)
 
+        mRender.ui = mUserinterface.ui
+
         // Main scene init.
         _flatshadeProgram = FlatshadeProgram(mContext)
         val (diamonds, frames, arches) = sparseObjectsGraph(_flatshadeProgram)
@@ -159,6 +161,18 @@ class Window {
             }
         })
 
+        glfwSetMouseButtonCallback(mWindow, { window, button, action, mods ->
+            if (action == GLFW_PRESS) {
+                val mouseEvent = WindowMousePress(button)
+                mUserinterface.notify(mouseEvent)
+            }
+
+            if (action == GLFW_RELEASE) {
+                val mouseEvent = WindowMouseRelease(button)
+                mUserinterface.notify(mouseEvent)
+            }
+        })
+
         glfwShowWindow(mWindow)
     }
 
@@ -171,6 +185,8 @@ class Window {
             }
 
             glfwPollEvents()
+
+            mUserinterface.update(mRender.currentFrame)
 
             mRender.frame()
         }
