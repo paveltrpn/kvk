@@ -8,6 +8,7 @@ import context.*
 import graph.*
 import render.*
 import config.*
+import userinterface.*
 
 import kvk.testgraph.sparseObjectsGraph
 
@@ -19,8 +20,10 @@ class Window {
 
     private val mContext: Context
     private val mRender: Render
+    private val mUserinterface: Userinterface
 
     init {
+        // === Init Config object sngleton ===
         Config.init()
 
         // NOTE: set default stack size - 128 kb!!!
@@ -59,14 +62,17 @@ class Window {
         // Create vulkan context object.
         mContext = Context(mWindow)
 
-        // Create global render object.
+        // Create userinterface object.
+        mUserinterface = Userinterface(mContext)
+
+        // Create render object.
         mRender = Render(mContext)
 
-        // Main scene init (mirrors kogl Window scene setup).
+        mUserinterface.attach(mRender)
+
+        // Main scene init.
         val (diamonds, frames, arches) = sparseObjectsGraph(mRender.flatshade)
-
         val (width, height) = mContext.viewportSize()
-
         val mainScene = Scene(width.toFloat() / height.toFloat())
 
         val locale = Locale()
