@@ -7,6 +7,9 @@ class Userinterface(val context: Context) : WindowEventEmitter() {
     private var _windowWidth: Int = 0
     private var _windowHeight: Int = 0
 
+    private var _windowPosX: Int = 0
+    private var _windowPosY: Int = 0
+
     private var _mousePosX: Int = 0
     private var _mousePosY: Int = 0
 
@@ -22,10 +25,22 @@ class Userinterface(val context: Context) : WindowEventEmitter() {
             _windowHeight = value
         }
 
-    var mousePosX: Int
-        get() = _mousePosX
+    var windowPosX: Int
+        get() = _windowWidth
         set(value) {
-            _mousePosX = value
+            _windowWidth = value
+        }
+
+    var windowPosY: Int
+        get() = _windowPosX
+        set(value) {
+            _windowPosX = value
+        }
+
+    var mousePosX: Int
+        get() = _windowPosY
+        set(value) {
+            _windowPosY = value
         }
 
     var mousePosY: Int

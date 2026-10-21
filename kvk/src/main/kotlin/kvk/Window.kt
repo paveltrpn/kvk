@@ -71,6 +71,8 @@ class Window {
         mUserinterface = Userinterface(mContext)
         mUserinterface.windowWidth = Config.instance().konfig.window_width
         mUserinterface.windowHeight = Config.instance().konfig.window_height
+        mUserinterface.windowPosX = Config.instance().konfig.window_pos_x
+        mUserinterface.windowPosY = Config.instance().konfig.window_pos_y
 
         // Create render object.
         mRender = Render(mContext)
@@ -95,10 +97,16 @@ class Window {
 
         val vidmode: GLFWVidMode? = glfwGetVideoMode(monitor)
 
+//        glfwSetWindowPos(
+//            mWindow,
+//            (vidmode!!.width() - mUserinterface.windowWidth) / 2,
+//            (vidmode.height() - mUserinterface.windowHeight) / 2
+//        )
+
         glfwSetWindowPos(
             mWindow,
-            (vidmode!!.width() - mUserinterface.windowWidth) / 2,
-            (vidmode.height() - mUserinterface.windowHeight) / 2
+            mUserinterface.windowPosX,
+            mUserinterface.windowPosY
         )
 
         glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN)
