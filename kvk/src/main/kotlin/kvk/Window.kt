@@ -8,6 +8,7 @@ import context.*
 import graph.*
 import render.*
 import config.*
+import events.*
 import userinterface.*
 
 import kvk.testgraph.sparseObjectsGraph
@@ -109,43 +110,13 @@ class Window {
             ) // We will detect this in the rendering loop
 
             if (action == GLFW_PRESS) {
-                when (key) {
-                    GLFW_KEY_W -> {
-                        mRender.scene.camera.setMoveBit(FlycamMoveBits.FORWARD)
-                    }
-
-                    GLFW_KEY_A -> {
-                        mRender.scene.camera.setMoveBit(FlycamMoveBits.LEFT)
-                    }
-
-                    GLFW_KEY_S -> {
-                        mRender.scene.camera.setMoveBit(FlycamMoveBits.BACKWARD)
-                    }
-
-                    GLFW_KEY_D -> {
-                        mRender.scene.camera.setMoveBit(FlycamMoveBits.RIGHT)
-                    }
-                }
+                val keyEvent = WindowKeyPress(key)
+                mUserinterface.notify(keyEvent)
             }
 
             if (action == GLFW_RELEASE) {
-                when (key) {
-                    GLFW_KEY_W -> {
-                        mRender.scene.camera.unsetMoveBit(FlycamMoveBits.FORWARD)
-                    }
-
-                    GLFW_KEY_A -> {
-                        mRender.scene.camera.unsetMoveBit(FlycamMoveBits.LEFT)
-                    }
-
-                    GLFW_KEY_S -> {
-                        mRender.scene.camera.unsetMoveBit(FlycamMoveBits.BACKWARD)
-                    }
-
-                    GLFW_KEY_D -> {
-                        mRender.scene.camera.unsetMoveBit(FlycamMoveBits.RIGHT)
-                    }
-                }
+                val keyEvent = WindowKeyRelease(key)
+                mUserinterface.notify(keyEvent)
             }
         })
 

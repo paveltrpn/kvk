@@ -7,6 +7,11 @@ import context.Context
 import graph.Scene
 
 import events.*
+import graph.FlycamMoveBits
+import org.lwjgl.glfw.GLFW.GLFW_KEY_A
+import org.lwjgl.glfw.GLFW.GLFW_KEY_D
+import org.lwjgl.glfw.GLFW.GLFW_KEY_S
+import org.lwjgl.glfw.GLFW.GLFW_KEY_W
 
 // ============================================================================
 // ======================= Render =============================================
@@ -91,6 +96,50 @@ class Render(val context: Context) : WindowEventObserver {
 
     // === Window events handler method ===
     override fun onWindowEvent(event: WindowEvent) {
-        TODO("Not yet implemented")
+        when (event) {
+            is WindowKeyPress -> {
+                when (event.keyCode) {
+                    // GLFW_KEY_W
+                    87 -> {
+                        scene.camera.setMoveBit(FlycamMoveBits.FORWARD)
+                    }
+
+                    // GLFW_KEY_A
+                    65 -> {
+                        scene.camera.setMoveBit(FlycamMoveBits.LEFT)
+                    }
+
+                    // GLFW_KEY_S
+                    83 -> {
+                        scene.camera.setMoveBit(FlycamMoveBits.BACKWARD)
+                    }
+
+                    // GLFW_KEY_D
+                    68 -> {
+                        scene.camera.setMoveBit(FlycamMoveBits.RIGHT)
+                    }
+                }
+            }
+
+            is WindowKeyRelease -> {
+                when (event.keyCode) {
+                    87 -> {
+                        scene.camera.unsetMoveBit(FlycamMoveBits.FORWARD)
+                    }
+
+                    65 -> {
+                        scene.camera.unsetMoveBit(FlycamMoveBits.LEFT)
+                    }
+
+                    83 -> {
+                        scene.camera.unsetMoveBit(FlycamMoveBits.BACKWARD)
+                    }
+
+                    68 -> {
+                        scene.camera.unsetMoveBit(FlycamMoveBits.RIGHT)
+                    }
+                }
+            }
+        }
     }
 }
