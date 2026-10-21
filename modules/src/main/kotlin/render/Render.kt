@@ -6,10 +6,10 @@ import graph.Scene
 
 import org.lwjgl.vulkan.VK10.vkDeviceWaitIdle
 
-// Port of tire RenderVK (mainloop.cpp) - spinning cube pass plus the
-// scenegraph walk that renders all Drawable objects via the flatshade
-// program. The scene graph itself is built by the application (Window),
-// mirroring kogl's Render.scene assignment.
+// ============================================================================
+// ======================= MeshBuffer =========================================
+// ============================================================================
+
 class Render(val context: Context) {
     private var mCurrentFrame: Int = 0
     private val mTimer: Timer = Timer()
@@ -45,9 +45,10 @@ class Render(val context: Context) {
             throw RuntimeException("Scene is null! Nothing to render!")
         }
 
-        println("render loop starts here...")
+        println("Render loop starts here...")
     }
 
+    // === Frame render main method ===
     fun frame() {
         if (context.swapchainOutdated) {
             if (!context.recreateSwapchain()) {
@@ -72,7 +73,7 @@ class Render(val context: Context) {
     }
 
     fun postLoop() {
-        println("wait device idle...")
+        println("Wait device idle...")
 
         // Wait for the logical device to finish operations before exiting
         // mainLoop and destroying the window.

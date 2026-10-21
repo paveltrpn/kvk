@@ -1,17 +1,19 @@
 package render
 
-import context.Context
-import context.ResourceBase
-import mesh.InterleavedMesh
-import mesh.SeparatedArraysMesh
+import org.lwjgl.vulkan.VK14.*
+import org.lwjgl.util.vma.Vma.*
 
 import org.lwjgl.system.MemoryUtil
-import org.lwjgl.util.vma.Vma.*
 import org.lwjgl.util.vma.VmaAllocationCreateInfo
-import org.lwjgl.vulkan.VK14.*
 import org.lwjgl.vulkan.VkBufferCopy
 import org.lwjgl.vulkan.VkBufferCreateInfo
 import org.lwjgl.vulkan.VkCommandBuffer
+
+import context.Context
+import context.ResourceBase
+
+import mesh.InterleavedMesh
+import mesh.SeparatedArraysMesh
 
 // ============================================================================
 // ======================= MeshBuffer =========================================
