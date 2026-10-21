@@ -59,9 +59,7 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
         var atlasPixels: ByteBuffer? = null
 
         MemoryStack.stackPush().use { stack ->
-            val fontConfig = NkFontConfig.calloc(stack)
-
-            val bakedFont = nk_font_atlas_add_default(_atlas, _FONT_HEIGHT, fontConfig)
+            val bakedFont = nk_font_atlas_add_default(_atlas, _FONT_HEIGHT, null)
             if (bakedFont == null) {
                 throw RuntimeException("failed to add default font to nuklear font atlas")
             }
