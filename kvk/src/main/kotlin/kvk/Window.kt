@@ -23,6 +23,8 @@ class Window {
     private val mRender: Render
     private val mUserinterface: Userinterface
 
+    private val _flatshadeProgram: FlatshadeProgram
+
     init {
         // === Init Config object sngleton ===
         Config.init()
@@ -80,7 +82,8 @@ class Window {
         mUserinterface.attach(mRender)
 
         // Main scene init.
-        val (diamonds, frames, arches) = sparseObjectsGraph(mRender.flatshade)
+        _flatshadeProgram = FlatshadeProgram(mContext)
+        val (diamonds, frames, arches) = sparseObjectsGraph(_flatshadeProgram)
         val (width, height) = mContext.viewportSize()
         val mainScene = Scene(width.toFloat() / height.toFloat())
 
@@ -109,8 +112,6 @@ class Window {
             mUserinterface.windowPosY
         )
 
-        glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN)
-
         glfwSetKeyCallback(mWindow, { window, key, scancode, action, mods ->
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) glfwSetWindowShouldClose(
                 window,
@@ -120,6 +121,13 @@ class Window {
             if (action == GLFW_PRESS) {
                 val keyEvent = WindowKeyPressEvent(key)
                 mUserinterface.notify(keyEvent)
+
+                // One single action that we must check.
+                if (mRender.holdMouse) {
+                    glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN)
+                } else {
+                    glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
+                }
             }
 
             if (action == GLFW_RELEASE) {
@@ -140,7 +148,9 @@ class Window {
         mRender.preLoop()
 
         while (!glfwWindowShouldClose(mWindow)) {
-            glfwSetCursorPos(mWindow, 400.0, 300.0)
+            if (mRender.holdMouse) {
+                glfwSetCursorPos(mWindow, 400.0, 300.0)
+            }
 
             glfwPollEvents()
 
@@ -154,6 +164,8 @@ class Window {
         mRender.free()
 
         mUserinterface.free()
+
+        _flatshadeProgram.free()
 
         mContext.free()
 

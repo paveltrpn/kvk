@@ -16,20 +16,20 @@ import graph.FlycamMoveBits
 class Render(val context: Context) : WindowEventObserver {
     private var mCurrentFrame: Int = 0
     private val mTimer: Timer = Timer()
-    private val mTestBox: TestBox
-    private val mFlatshade: FlatshadeProgram
     private var mScene: Scene? = null
 
-    init {
-        mTestBox = TestBox(context)
-        mTestBox.setPosition(0.0f, 0.0f, -2.5f)
+    private var _holdMouse: Boolean
 
-        mFlatshade = FlatshadeProgram(context)
+    private val _mouseSensitivity = 0.005f
+
+    init {
+        _holdMouse = true
     }
 
-    val flatshade: FlatshadeProgram
-        get(): FlatshadeProgram {
-            return mFlatshade
+    var holdMouse: Boolean
+        get() = _holdMouse
+        set(value) {
+            _holdMouse = value
         }
 
     var scene: Scene
@@ -86,8 +86,6 @@ class Render(val context: Context) : WindowEventObserver {
     fun free() {
         mScene?.free()
         mScene = null
-        mFlatshade.free()
-        mTestBox.free()
     }
 
     // === Window events handler method ===
@@ -114,6 +112,10 @@ class Render(val context: Context) : WindowEventObserver {
                     68 -> {
                         scene.camera.setMoveBit(FlycamMoveBits.RIGHT)
                     }
+
+                    71 -> {
+                        holdMouse = !holdMouse
+                    }
                 }
             }
 
@@ -138,11 +140,12 @@ class Render(val context: Context) : WindowEventObserver {
             }
 
             is WindowMouseMoveEvent -> {
-                val sensitivity = 0.005f
-                scene.camera.rotate(
-                    (400.0 - event.posX).toFloat() * sensitivity,
-                    (300.0 - event.posY).toFloat() * sensitivity
-                )
+                if (holdMouse) {
+                    scene.camera.rotate(
+                        (400.0 - event.posX).toFloat() * _mouseSensitivity,
+                        (300.0 - event.posY).toFloat() * _mouseSensitivity
+                    )
+                }
             }
         }
     }
