@@ -45,7 +45,6 @@ class NuklearVulkanBackend(val context: Context) : ResourceBase() {
     private val _frames: MutableList<FrameBuffers> = mutableListOf()
 
     private var _descriptorSetLayout: Long = VK_NULL_HANDLE
-    private var _descriptorPool: Long = VK_NULL_HANDLE
     private var _descriptorSet: Long = VK_NULL_HANDLE
 
     private var _fontImage: Long = VK_NULL_HANDLE
@@ -60,7 +59,6 @@ class NuklearVulkanBackend(val context: Context) : ResourceBase() {
     init {
         initFrameBuffers()
         initDescriptorSetLayout()
-        initDescriptorPool()
 
         val program = Program(context, TextProgramSource("nuklear"))
         buildPipeline(program)
@@ -384,7 +382,6 @@ class NuklearVulkanBackend(val context: Context) : ResourceBase() {
         vkDestroyPipelineCache(context.device, _pipelineCache, null)
         vkDestroyPipelineLayout(context.device, _pipelineLayout, null)
 
-        vkDestroyDescriptorPool(context.device, _descriptorPool, null)
         vkDestroyDescriptorSetLayout(context.device, _descriptorSetLayout, null)
 
         vkDestroySampler(context.device, _fontSampler, null)
@@ -542,38 +539,11 @@ class NuklearVulkanBackend(val context: Context) : ResourceBase() {
         }
     }
 
-    private fun initDescriptorPool() {
-        mStack.push().use { stack ->
-            val sizes = VkDescriptorPoolSize.calloc(1, stack)
-            sizes.get(0)
-                .type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-                .descriptorCount(1)
-
-            val poolInfo = VkDescriptorPoolCreateInfo.calloc(stack)
-                .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
-                .flags(0)
-                .maxSets(1)
-                .pPoolSizes(sizes)
-
-            val poolBuf = stack.mallocLong(1)
-            when (val result = vkCreateDescriptorPool(context.device, poolInfo, null, poolBuf)) {
-                VK_SUCCESS -> {
-                }
-
-                else -> {
-                    throw RuntimeException("failed to create nuklear descriptor pool: $result")
-                }
-            }
-
-            _descriptorPool = poolBuf.get(0)
-        }
-    }
-
     private fun writeDescriptorSet() {
         mStack.push().use { stack ->
             val allocInfo = VkDescriptorSetAllocateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO)
-                .descriptorPool(_descriptorPool)
+                .descriptorPool(context.descriptorPool)
                 .pSetLayouts(stack.longs(_descriptorSetLayout))
 
             val setBuf = stack.mallocLong(1)

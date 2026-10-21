@@ -97,6 +97,16 @@ class Context(
             return mSurface.mSurfaceFormat
         }
 
+    val descriptorPool: Long
+        get() {
+            return mPools.mDescriptorPool
+        }
+
+    val commandPool: Long
+        get() {
+            return mPools.mCommandPool
+        }
+
     fun viewportSize(): Pair<Int, Int> {
         return Pair(mWidth, mHeight)
     }
