@@ -12,8 +12,6 @@ import context.Context
 import events.*
 import render.UiDrawable
 
-import java.nio.ByteBuffer
-
 class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
 
     companion object {
@@ -55,9 +53,8 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
         nk_font_atlas_begin(_atlas)
 
         val font: NkFont
-        var atlasWidth = 0
-        var atlasHeight = 0
-        var atlasPixels: ByteBuffer? = null
+
+        _backend = NuklearVulkanBackend(context)
 
         MemoryStack.stackPush().use { stack ->
             val bakedFont =
@@ -79,19 +76,14 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
             val widthBuf = stack.mallocInt(1)
             val heightBuf = stack.mallocInt(1)
 
-            atlasPixels = nk_font_atlas_bake(_atlas, widthBuf, heightBuf, NK_FONT_ATLAS_RGBA32)
-            atlasWidth = widthBuf.get(0)
-            atlasHeight = heightBuf.get(0)
+            val atlasPixels = nk_font_atlas_bake(_atlas, widthBuf, heightBuf, NK_FONT_ATLAS_RGBA32)
+
+            if (atlasPixels == null) {
+                throw RuntimeException("failed to bake nuklear font atlas")
+            }
+
+            _backend.uploadFontTexture(atlasPixels, widthBuf.get(0), heightBuf.get(0))
         }
-
-        val pixels = atlasPixels
-
-        if (atlasPixels == null) {
-            throw RuntimeException("failed to bake nuklear font atlas")
-        }
-
-        _backend = NuklearVulkanBackend(context)
-        _backend.uploadFontTexture(pixels, atlasWidth, atlasHeight)
 
         nk_handle_id(_TEXTURE_ID, _textureHandle)
         nk_font_atlas_end(_atlas, _textureHandle, _drawNullTexture)
