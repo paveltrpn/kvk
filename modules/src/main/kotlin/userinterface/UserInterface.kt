@@ -33,6 +33,9 @@ class Userinterface(val context: Context) : WindowEventEmitter() {
         set(value) {
             _mousePosY = value
         }
+
+    fun free() {
+    }
 }
 
 

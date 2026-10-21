@@ -8,10 +8,6 @@ import graph.Scene
 
 import events.*
 import graph.FlycamMoveBits
-import org.lwjgl.glfw.GLFW.GLFW_KEY_A
-import org.lwjgl.glfw.GLFW.GLFW_KEY_D
-import org.lwjgl.glfw.GLFW.GLFW_KEY_S
-import org.lwjgl.glfw.GLFW.GLFW_KEY_W
 
 // ============================================================================
 // ======================= Render =============================================
@@ -97,7 +93,7 @@ class Render(val context: Context) : WindowEventObserver {
     // === Window events handler method ===
     override fun onWindowEvent(event: WindowEvent) {
         when (event) {
-            is WindowKeyPress -> {
+            is WindowKeyPressEvent -> {
                 when (event.keyCode) {
                     // GLFW_KEY_W
                     87 -> {
@@ -121,7 +117,7 @@ class Render(val context: Context) : WindowEventObserver {
                 }
             }
 
-            is WindowKeyRelease -> {
+            is WindowKeyReleaseEvent -> {
                 when (event.keyCode) {
                     87 -> {
                         scene.camera.unsetMoveBit(FlycamMoveBits.FORWARD)
@@ -139,6 +135,14 @@ class Render(val context: Context) : WindowEventObserver {
                         scene.camera.unsetMoveBit(FlycamMoveBits.RIGHT)
                     }
                 }
+            }
+
+            is WindowMouseMoveEvent -> {
+                val sensitivity = 0.005f
+                scene.camera.rotate(
+                    (400.0 - event.posX).toFloat() * sensitivity,
+                    (300.0 - event.posY).toFloat() * sensitivity
+                )
             }
         }
     }

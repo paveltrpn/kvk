@@ -107,25 +107,22 @@ class Window {
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) glfwSetWindowShouldClose(
                 window,
                 true
-            ) // We will detect this in the rendering loop
+            )
 
             if (action == GLFW_PRESS) {
-                val keyEvent = WindowKeyPress(key)
+                val keyEvent = WindowKeyPressEvent(key)
                 mUserinterface.notify(keyEvent)
             }
 
             if (action == GLFW_RELEASE) {
-                val keyEvent = WindowKeyRelease(key)
+                val keyEvent = WindowKeyReleaseEvent(key)
                 mUserinterface.notify(keyEvent)
             }
         })
 
         glfwSetCursorPosCallback(mWindow, { window, xpos, ypos ->
-            val sensitivity = 0.005f
-            mRender.scene.camera.rotate(
-                (400.0 - xpos).toFloat() * sensitivity,
-                (300.0 - ypos).toFloat() * sensitivity
-            )
+            val mouseEvent = WindowMouseMoveEvent(xpos.toInt(), ypos.toInt())
+            mUserinterface.notify(mouseEvent)
         })
 
         glfwShowWindow(mWindow)
@@ -135,11 +132,10 @@ class Window {
         mRender.preLoop()
 
         while (!glfwWindowShouldClose(mWindow)) {
-            // Re-center the hidden cursor each frame so the camera rotate
-            // offset is always relative to the window center (kogl loop).
             glfwSetCursorPos(mWindow, 400.0, 300.0)
 
             glfwPollEvents()
+
             mRender.frame()
         }
 
@@ -147,10 +143,10 @@ class Window {
     }
 
     fun destroy() {
-        // Free structures, allocated in render.
         mRender.free()
 
-        // Free structures, allocated in context.
+        mUserinterface.free()
+
         mContext.free()
 
         if (mWindow != NULL) {
@@ -158,12 +154,5 @@ class Window {
         }
 
         glfwTerminate()
-
-//        Objects.requireNonNull<T?>(glfwSetErrorCallback(null)).free()
-
-//        allocator!!.deallocate().free()
-//        allocator!!.reallocate().free()
-//        allocator!!.allocate().free()
-//        allocator!!.free()
     }
 }

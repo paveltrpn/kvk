@@ -4,27 +4,17 @@ interface WindowEvent {
 
 }
 
-class WindowMoveEvent : WindowEvent {
+data class WindowMoveEvent(val posX: Int, val posY: Int) : WindowEvent {}
 
-}
+data class WindowResizeEvent(val keyCode: Int) : WindowEvent {}
 
-class WindowResizeEvent : WindowEvent {
+data class WindowMousePress(val keyCode: Int) : WindowEvent {}
 
-}
+data class WindowMouseRelease(val keyCode: Int) : WindowEvent {}
 
-class WindowMousePress : WindowEvent {
+data class WindowMouseMoveEvent(val posX: Int, val posY: Int) : WindowEvent {}
 
-}
+data class WindowKeyPressEvent(val keyCode: Int) : WindowEvent {}
 
-class WindowMouseRelease : WindowEvent {
-
-}
-
-class WindowMouseMove(val posX: Int, val posY: Int) : WindowEvent {
-
-}
-
-data class WindowKeyPress(val keyCode: Int) : WindowEvent {}
-
-data class WindowKeyRelease(val keyCode: Int) : WindowEvent {}
+data class WindowKeyReleaseEvent(val keyCode: Int) : WindowEvent {}
 
