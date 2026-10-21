@@ -144,6 +144,26 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
         nk_input_begin(_ctx)
 
         while (_eventQueue.isNotEmpty()) {
+            val mapButton: (Int) -> Int = { key: Int ->
+                when (key) {
+                    GLFW_MOUSE_BUTTON_LEFT -> {
+                        NK_BUTTON_LEFT
+                    }
+
+                    GLFW_MOUSE_BUTTON_RIGHT -> {
+                        NK_BUTTON_RIGHT
+                    }
+
+                    GLFW_MOUSE_BUTTON_MIDDLE -> {
+                        NK_BUTTON_MIDDLE
+                    }
+
+                    else -> {
+                        NK_BUTTON_LEFT
+                    }
+                }
+            }
+
             when (val event = _eventQueue.removeFirst()) {
                 is WindowMouseMoveEvent -> {
                     _mouseX = event.posX
@@ -216,25 +236,5 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
         }
 
         nk_end(_ctx)
-    }
-
-    private fun mapButton(keyCode: Int): Int {
-        when (keyCode) {
-            GLFW_MOUSE_BUTTON_LEFT -> {
-                return NK_BUTTON_LEFT
-            }
-
-            GLFW_MOUSE_BUTTON_RIGHT -> {
-                return NK_BUTTON_RIGHT
-            }
-
-            GLFW_MOUSE_BUTTON_MIDDLE -> {
-                return NK_BUTTON_MIDDLE
-            }
-
-            else -> {
-                return NK_BUTTON_LEFT
-            }
-        }
     }
 }
