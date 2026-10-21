@@ -13,12 +13,6 @@ import events.*
 import render.UiDrawable
 
 class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
-
-    companion object {
-        private const val _FONT_HEIGHT: Float = 13.0f
-        private const val _TEXTURE_ID: Int = 1
-    }
-
     private val _allocator: NkAllocator = NkAllocator.create()
         .alloc(NkPluginAllocI { handle: Long, old: Long, size: Long -> nmemAllocChecked(size) })
         .mfree(NkPluginFreeI { handle: Long, ptr: Long -> nmemFree(ptr) })
@@ -65,8 +59,6 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
                     null
                 )
 
-//            val bakedFont = nk_font_atlas_add_default(_atlas, _FONT_HEIGHT, null)
-
             if (bakedFont == null) {
                 throw RuntimeException("failed to add default font to nuklear font atlas")
             }
@@ -85,7 +77,8 @@ class NuklearUi(val context: Context) : UiDrawable, WindowEventObserver {
             _backend.uploadFontTexture(atlasPixels, widthBuf.get(0), heightBuf.get(0))
         }
 
-        nk_handle_id(_TEXTURE_ID, _textureHandle)
+        val TEXTURE_ID = 1
+        nk_handle_id(TEXTURE_ID, _textureHandle)
         nk_font_atlas_end(_atlas, _textureHandle, _drawNullTexture)
 
         nk_style_set_font(_ctx, font.handle())
