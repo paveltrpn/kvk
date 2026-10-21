@@ -9,8 +9,8 @@ import org.lwjgl.vulkan.KHRSwapchain.*
 
 class Context(
     val window: Long,
-    private var mWidth: Int = 800,
-    private var mHeight: Int = 600
+    private var mWidth: Int,
+    private var mHeight: Int
 ) : ResourceBase() {
 
     class Frame {

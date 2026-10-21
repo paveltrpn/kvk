@@ -51,19 +51,25 @@ class Window {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE)
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
 
-        val WIDTH = 1600
-        val HEIGHT = 800
+        mWindow = glfwCreateWindow(
+            Config.instance().konfig.window_width,
+            Config.instance().konfig.window_height,
+            "kvk",
+            NULL,
+            NULL
+        )
 
-        mWindow = glfwCreateWindow(WIDTH, HEIGHT, "kvk", NULL, NULL)
         if (mWindow == NULL) {
             throw RuntimeException("Failed to create the GLFW window")
         }
 
         // Create vulkan context object.
-        mContext = Context(mWindow)
+        mContext = Context(mWindow, Config.instance().konfig.window_width, Config.instance().konfig.window_height)
 
         // Create userinterface object.
         mUserinterface = Userinterface(mContext)
+        mUserinterface.windowWidth = Config.instance().konfig.window_width
+        mUserinterface.windowHeight = Config.instance().konfig.window_height
 
         // Create render object.
         mRender = Render(mContext)
@@ -81,7 +87,7 @@ class Window {
 
         mRender.scene = mainScene
 
-        glfwSetWindowSizeLimits(mWindow, WIDTH, HEIGHT, GLFW_DONT_CARE, GLFW_DONT_CARE)
+        // glfwSetWindowSizeLimits(mWindow, WIDTH, HEIGHT, GLFW_DONT_CARE, GLFW_DONT_CARE)
 
         //glfwSetWindowAspectRatio(window, 1, 1);
         val monitor = glfwGetPrimaryMonitor()
@@ -90,8 +96,8 @@ class Window {
 
         glfwSetWindowPos(
             mWindow,
-            (vidmode!!.width() - WIDTH) / 2,
-            (vidmode.height() - HEIGHT) / 2
+            (vidmode!!.width() - mUserinterface.windowWidth) / 2,
+            (vidmode.height() - mUserinterface.windowHeight) / 2
         )
 
         glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN)
