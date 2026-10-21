@@ -1,16 +1,18 @@
 package render
 
+import org.lwjgl.vulkan.VK10.vkDeviceWaitIdle
+
 import config.Config
 import context.Context
 import graph.Scene
 
-import org.lwjgl.vulkan.VK10.vkDeviceWaitIdle
+import events.*
 
 // ============================================================================
-// ======================= MeshBuffer =========================================
+// ======================= Render =============================================
 // ============================================================================
 
-class Render(val context: Context) {
+class Render(val context: Context) : WindowEventObserver {
     private var mCurrentFrame: Int = 0
     private val mTimer: Timer = Timer()
     private val mTestBox: TestBox
@@ -69,7 +71,7 @@ class Render(val context: Context) {
             scene.walk(cb)
         }
 
-        mCurrentFrame = (mCurrentFrame + 1) % Config.FRAMES_COUNT
+        mCurrentFrame = (mCurrentFrame + 1) % Config.instance().konfig.frame_count
     }
 
     fun postLoop() {
@@ -85,5 +87,10 @@ class Render(val context: Context) {
         mScene = null
         mFlatshade.free()
         mTestBox.free()
+    }
+
+    // === Window events handler method ===
+    override fun onWindowEvent(event: WindowEvent) {
+        TODO("Not yet implemented")
     }
 }

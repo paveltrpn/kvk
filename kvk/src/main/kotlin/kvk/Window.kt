@@ -7,6 +7,7 @@ import org.lwjgl.system.MemoryUtil.*
 import context.*
 import graph.*
 import render.*
+import config.*
 
 import kvk.testgraph.sparseObjectsGraph
 
@@ -20,6 +21,8 @@ class Window {
     private val mRender: Render
 
     init {
+        Config.init()
+
         // NOTE: set default stack size - 128 kb!!!
         Configuration.STACK_SIZE.set(128 * 1024)
 

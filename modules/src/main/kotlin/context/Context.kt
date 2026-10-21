@@ -215,7 +215,7 @@ class Context(
             val createInfo = VkSwapchainCreateInfoKHR.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
                 .surface(surface)
-                .minImageCount(Config.FRAMES_COUNT)
+                .minImageCount(Config.instance().konfig.frame_count)
                 .imageFormat(mSurface.mSurfaceFormat)
                 .imageColorSpace(mSurface.mSurfaceColorSpace)
                 .imageExtent(swapExtent)

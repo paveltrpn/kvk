@@ -14,7 +14,7 @@ import render.*
 // minus testCubesGraph and the GL program setup - the single flatshade
 // program is passed in.
 fun sparseObjectsGraph(program: FlatshadeProgram): Triple<StateGroup, StateGroup, StateGroup> {
-    val pathPrefix = Config.workPath()
+    val pathPrefix = Config.instance().workPath
 
     val frameObj = readWavefrontObjFile("${pathPrefix}/assets/bodies/frame.obj")
     val frameMesh = InterleavedMesh(frameObj)

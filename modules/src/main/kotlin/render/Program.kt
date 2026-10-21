@@ -38,7 +38,7 @@ class TextProgramSource(programName: String) {
     val sources: List<Pair<ShaderStageType, String>>
 
     init {
-        val shadersPath = Path(Config.workPath(), "shaders")
+        val shadersPath = Path(Config.instance().workPath, "shaders")
 
         if (!shadersPath.exists()) {
             throw RuntimeException("path to shaders ${shadersPath.pathString} not exist")
@@ -134,7 +134,7 @@ class Program(val context: Context, source: TextProgramSource) : ResourceBase() 
 
         val bytes = shaderc_result_get_bytes(result)!!
         val bytecode = MemoryUtil.memAlloc(bytes.remaining())
-        
+
         bytecode.put(bytes)
         bytecode.flip()
 

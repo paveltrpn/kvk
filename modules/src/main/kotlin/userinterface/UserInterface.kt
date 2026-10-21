@@ -1,22 +1,24 @@
-package events
+package userinterface
 
-interface WindowEventObserver {
-    abstract fun onEvent(event: WindowEvent)
-}
+import config.Config
+import events.*
 
-class WindowEventBus {
-    private val _observers: MutableList<WindowEventObserver> = mutableListOf()
+class Userinterface private constructor() : WindowEventEmitter() {
+    companion object {
+        @Volatile
+        private var _instance: Userinterface? = null
 
-    fun attach(observer: WindowEventObserver) {
-        _observers.add(observer)
-    }
+        fun init(): Userinterface {
+            return _instance ?: synchronized(this) {
+                _instance ?: Userinterface().also { _instance = it }
+            }
+        }
 
-    fun detach(observer: WindowEventObserver) {
-        _observers.remove(observer)
-    }
-
-    fun notify(event: WindowEvent) {
-        _observers.forEach { it.onEvent(event) }
+        fun instance(): Userinterface {
+            return _instance ?: throw IllegalStateException(
+                "Userinterface singleton must be initialized by calling init() first."
+            )
+        }
     }
 }
 
